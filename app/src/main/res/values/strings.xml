@@ -1,0 +1,30 @@
+<resources>
+    <string name="app_name">Eiga</string>
+
+    <string name="menu_settings">Settings</string>
+    <string name="load_more">Load 20 more</string>
+    <string name="no_internet">No Internet Connection!</string>
+    <string name="retry">Retry</string>
+
+
+    <string-array name="sort_order_options">
+        <item>Most Popular</item>
+        <item>Highest Rated</item>
+    </string-array>
+
+    <string-array name="sort_order_values">
+        <item>popular</item>
+        <item>top_rated</item>
+    </string-array>
+
+    <!--preference string-->
+    <string name="sort_order_summary">Select the sort order for Movies</string>
+    <string name="sort_order_title">Sort By</string>
+    <string name="sort_order_pref_key">SortOrderKey</string>
+    <string name="default_sort_order">popular</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="dummy_overview">Following the events of Age of Ultron, the collective governments of the world pass an act designed to regulate all superhuman activity. This polarizes opinion amongst the Avengers, causing two factions to side with Iron Man or Captain America, which causes an epic battle between former allies.</string>
+
+</resources>
