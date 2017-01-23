@@ -1,14 +1,19 @@
 package com.vale.velu.eiga2.ui;
 
 
+import android.content.ActivityNotFoundException;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.Toolbar;
@@ -26,7 +31,9 @@ import com.vale.velu.eiga2.R;
 import com.vale.velu.eiga2.data.MovieContract.MovieEntry;
 import com.vale.velu.eiga2.model.Movie;
 import com.vale.velu.eiga2.model.MovieReview;
+import com.vale.velu.eiga2.model.MovieTrailer;
 import com.vale.velu.eiga2.model.Review;
+import com.vale.velu.eiga2.model.Trailer;
 import com.vale.velu.eiga2.services.ApiInterface;
 import com.vale.velu.eiga2.services.ServiceGenerator;
 import com.vale.velu.eiga2.utils.Constants;
@@ -63,6 +70,8 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
     TextView tvPlotSynopsis;
     @Bind(R.id.fav_fab)
     FloatingActionButton favFab;
+    @Bind(R.id.play_fab)
+    FloatingActionButton playTrailerFab;
     @Bind(R.id.review_1)
     CardView mReviewView1;
     @Bind(R.id.review_2)
@@ -73,6 +82,7 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
     private CollapsingToolbarLayout mCollapsingToolbarLayout;
     private Context mContext;
     private Movie mMovie;
+    boolean isFavourite;
 
     public static MovieDetailFragment newInstance() {
         return new MovieDetailFragment();
@@ -149,6 +159,7 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
             }
         });
         favFab.setOnClickListener(this);
+        playTrailerFab.setOnClickListener(this);
 
     }
 
@@ -167,9 +178,23 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
         switch (view.getId()){
             case R.id.fav_fab:
                 Toast.makeText(mContext, "Fab clicked", Toast.LENGTH_LONG).show();
+                setFavIcon();
                 mContext.getContentResolver().insert(MovieEntry.CONTENT_URI, prepareMovieCv());
                 break;
+
+            case R.id.play_fab:
+                fetchMovieTrailer();
+                break;
         }
+    }
+
+    private void setFavIcon() {
+        isFavourite = !isFavourite;
+        if(isFavourite){
+            favFab.setImageResource(R.drawable.ic_heart_filled);
+        }
+        else
+            favFab.setImageResource(R.drawable.ic_heart_empty);
     }
 
     private ContentValues prepareMovieCv(){
@@ -238,7 +263,6 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
     private void displayMovieReview(int position, Review review){
 
         CardView reviewView;
-
         if(position == 0){
             reviewView = mReviewView1;
             reviewView.findViewById(R.id.review_heading).setVisibility(View.VISIBLE);
@@ -253,6 +277,67 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
             ((TextView)reviewView.findViewById(R.id.author)).setText(review.getAuthor());
             ((TextView)reviewView.findViewById(R.id.content)).setText(review.getContent());
         }
-
     }
+
+    private void fetchMovieTrailer(){
+
+        ApiInterface apiInterface = ServiceGenerator.createService(ApiInterface.class);
+
+        Call<MovieTrailer> movieTrailerCall = apiInterface.getMovieTrailers(mMovie.getId(),
+                BuildConfig.API_KEY);
+
+        movieTrailerCall.enqueue(new Callback<MovieTrailer>() {
+            @Override
+            public void onResponse(Call<MovieTrailer> call, Response<MovieTrailer> response) {
+                if(response.code() == HttpURLConnection.HTTP_OK){
+                    MovieTrailer movieTrailer = response.body();
+
+                    setUiWithTrailerDialog(movieTrailer.getTrailerList());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<MovieTrailer> call, Throwable t) {
+
+            }
+        });
+    }
+
+    private void setUiWithTrailerDialog(final List<Trailer> trailerList){
+
+        if(trailerList != null && trailerList.size() > 0){
+
+            String [] trailerNames = new String[trailerList.size()];
+
+            for (int i = 0; i < trailerList.size(); i++) {
+                trailerNames[i] = trailerList.get(i).getName();
+            }
+
+            AlertDialog.Builder alertDialog = new AlertDialog
+                    .Builder(mContext).setTitle("Trailers")
+                    .setItems(trailerNames, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int position) {
+                            playMovieTrailer(trailerList.get(position).getKey());
+                            dialogInterface.dismiss();
+                        }
+                    });
+            alertDialog.show();
+        }
+    }
+
+    private void playMovieTrailer(String key){
+
+        Intent appIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + key));
+        Intent webIntent = new Intent(Intent.ACTION_VIEW,
+                Uri.parse("http://www.youtube.com/watch?v=?" + key));
+
+        try{
+            startActivity(appIntent);
+        }
+        catch (ActivityNotFoundException e){
+            startActivity(webIntent);
+        }
+    }
+
 }
