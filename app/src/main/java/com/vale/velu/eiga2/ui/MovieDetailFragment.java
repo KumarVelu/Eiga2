@@ -72,6 +72,8 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
     FloatingActionButton favFab;
     @Bind(R.id.play_fab)
     FloatingActionButton playTrailerFab;
+    @Bind(R.id.share_fab)
+    FloatingActionButton shareFab;
     @Bind(R.id.review_1)
     CardView mReviewView1;
     @Bind(R.id.review_2)
@@ -83,6 +85,8 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
     private Context mContext;
     private Movie mMovie;
     boolean isFavourite;
+
+    int mFabId;
 
     public static MovieDetailFragment newInstance() {
         return new MovieDetailFragment();
@@ -160,7 +164,7 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
         });
         favFab.setOnClickListener(this);
         playTrailerFab.setOnClickListener(this);
-
+        shareFab.setOnClickListener(this);
     }
 
     @Override
@@ -175,7 +179,9 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
 
     @Override
     public void onClick(View view) {
-        switch (view.getId()){
+
+        mFabId = view.getId();
+        switch (mFabId){
             case R.id.fav_fab:
                 Toast.makeText(mContext, "Fab clicked", Toast.LENGTH_LONG).show();
                 setFavIcon();
@@ -183,6 +189,10 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
                 break;
 
             case R.id.play_fab:
+                fetchMovieTrailer();
+                break;
+
+            case R.id.share_fab:
                 fetchMovieTrailer();
                 break;
         }
@@ -281,26 +291,34 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
 
     private void fetchMovieTrailer(){
 
-        ApiInterface apiInterface = ServiceGenerator.createService(ApiInterface.class);
+        if(Utils.isInternetOn(mContext)){
+            ApiInterface apiInterface = ServiceGenerator.createService(ApiInterface.class);
 
-        Call<MovieTrailer> movieTrailerCall = apiInterface.getMovieTrailers(mMovie.getId(),
-                BuildConfig.API_KEY);
+            Call<MovieTrailer> movieTrailerCall = apiInterface.getMovieTrailers(mMovie.getId(),
+                    BuildConfig.API_KEY);
 
-        movieTrailerCall.enqueue(new Callback<MovieTrailer>() {
-            @Override
-            public void onResponse(Call<MovieTrailer> call, Response<MovieTrailer> response) {
-                if(response.code() == HttpURLConnection.HTTP_OK){
-                    MovieTrailer movieTrailer = response.body();
+            movieTrailerCall.enqueue(new Callback<MovieTrailer>() {
+                @Override
+                public void onResponse(Call<MovieTrailer> call, Response<MovieTrailer> response) {
+                    if(response.code() == HttpURLConnection.HTTP_OK){
+                        MovieTrailer movieTrailer = response.body();
 
-                    setUiWithTrailerDialog(movieTrailer.getTrailerList());
+                        if(mFabId == R.id.play_fab)
+                            setUiWithTrailerDialog(movieTrailer.getTrailerList());
+                        else if(mFabId == R.id.share_fab)
+                            shareMovieTrailer(movieTrailer.getTrailerList());
+                    }
                 }
-            }
 
-            @Override
-            public void onFailure(Call<MovieTrailer> call, Throwable t) {
+                @Override
+                public void onFailure(Call<MovieTrailer> call, Throwable t) {
 
-            }
-        });
+                }
+            });
+        }
+        else{
+            Utils.showSnackBar(mCoordinatorLayout, getString(R.string.no_internet));
+        }
     }
 
     private void setUiWithTrailerDialog(final List<Trailer> trailerList){
@@ -330,7 +348,7 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
 
         Intent appIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + key));
         Intent webIntent = new Intent(Intent.ACTION_VIEW,
-                Uri.parse("http://www.youtube.com/watch?v=?" + key));
+                Uri.parse(Constants.BASE_URL_VIDEO + key));
 
         try{
             startActivity(appIntent);
@@ -338,6 +356,27 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
         catch (ActivityNotFoundException e){
             startActivity(webIntent);
         }
+    }
+
+    private void shareMovieTrailer(List<Trailer> trailerList){
+
+        if(trailerList != null && trailerList.size() > 0){
+
+            String trailerVideoText = Constants.BASE_URL_VIDEO + trailerList.get(0).getKey();
+
+            Intent intent = new Intent(Intent.ACTION_SEND);
+            intent.setType("text/plain");
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            intent.putExtra(Intent.EXTRA_TEXT, trailerVideoText);
+
+            Intent shareIntent = Intent.createChooser(intent, "Share trailer via ");
+
+            if(intent.resolveActivity(mContext.getPackageManager()) != null){
+                startActivity(shareIntent);
+            }
+
+        }
+
     }
 
 }
