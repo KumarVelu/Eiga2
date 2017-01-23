@@ -16,13 +16,16 @@ import com.vale.velu.eiga2.data.MovieContract.MovieEntry;
 public class MovieProvider extends ContentProvider {
 
     private DbHelper mDbHelper;
-    public static final int MOVIE = 100;
+    private static final int MOVIE = 100;
+    private static final int MOVIE_WITH_ID = 101;
 
-    public static UriMatcher sUriMatcher = buildUriMathcer();
+    public static UriMatcher sUriMatcher = buildUriMathcher();
 
-    static UriMatcher buildUriMathcer(){
+    static UriMatcher buildUriMathcher(){
         UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
         matcher.addURI(MovieContract.AUTHORITY, MovieContract.PATH_MOVIE, MOVIE);
+        matcher.addURI(MovieContract.AUTHORITY, MovieContract.PATH_MOVIE + "/#",
+                MOVIE_WITH_ID);
         return matcher;
     }
 
@@ -34,8 +37,27 @@ public class MovieProvider extends ContentProvider {
 
     @Nullable
     @Override
-    public Cursor query(Uri uri, String[] strings, String s, String[] strings1, String s1) {
-        return null;
+    public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+
+        final SQLiteDatabase db = mDbHelper.getReadableDatabase();
+        Cursor returnCursor;
+
+        switch (sUriMatcher.match(uri)){
+            case MOVIE_WITH_ID:
+                returnCursor = db.query(MovieEntry.TABLE_NAME,
+                        new String[]{MovieEntry.COLUMN_MOVIE_ID},
+                        MovieEntry.COLUMN_MOVIE_ID + " = ?",
+                        new String[]{MovieEntry.getMovieIdFromUri(uri)},
+                        null,
+                        null,
+                        sortOrder);
+                break;
+
+            default:
+                throw new UnsupportedOperationException("Unknown uri " + uri);
+        }
+
+        return returnCursor;
     }
 
     @Nullable

@@ -6,6 +6,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -17,7 +18,6 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -51,7 +51,7 @@ import retrofit2.Response;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class MovieDetailFragment extends BaseFragment implements View.OnClickListener{
+public class MovieDetailFragment extends BaseFragment implements View.OnClickListener {
     public static final String MOVIE_KEY = "movie";
     private static final String TAG = MovieDetailFragment.class.getSimpleName();
 
@@ -100,7 +100,6 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
         if (getArguments() != null) {
             mMovie = (Movie) getArguments().getSerializable(MOVIE_KEY);
         }
-        Log.i(TAG, "onCreate: mMovie ==> " + mMovie);
     }
 
     @Override
@@ -151,10 +150,11 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
         super.onViewCreated(view, savedInstanceState);
         initializeUi();
         fetchMovieReviews();
+        checkIfFavourite();
         setUiWithMovieDetails();
     }
 
-    private void initializeUi(){
+    private void initializeUi() {
         mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -181,7 +181,7 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
     public void onClick(View view) {
 
         mFabId = view.getId();
-        switch (mFabId){
+        switch (mFabId) {
             case R.id.fav_fab:
                 Toast.makeText(mContext, "Fab clicked", Toast.LENGTH_LONG).show();
                 setFavIcon();
@@ -198,16 +198,17 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
         }
     }
 
+    
+
     private void setFavIcon() {
-        isFavourite = !isFavourite;
-        if(isFavourite){
+       // isFavourite = !isFavourite;
+        if (isFavourite) {
             favFab.setImageResource(R.drawable.ic_heart_filled);
-        }
-        else
+        } else
             favFab.setImageResource(R.drawable.ic_heart_empty);
     }
 
-    private ContentValues prepareMovieCv(){
+    private ContentValues prepareMovieCv() {
         ContentValues movieCv = new ContentValues();
         movieCv.put(MovieEntry.COLUMN_MOVIE_ID, mMovie.getId());
         movieCv.put(MovieEntry.COLUMN_TITLE, mMovie.getTitle());
@@ -220,9 +221,9 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
         return movieCv;
     }
 
-    private void fetchMovieReviews(){
+    private void fetchMovieReviews() {
 
-        if(Utils.isInternetOn(mContext)){
+        if (Utils.isInternetOn(mContext)) {
             showProgresDialog();
             ApiInterface apiInterface = ServiceGenerator.createService(ApiInterface.class);
 
@@ -233,8 +234,8 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
                 @Override
                 public void onResponse(Call<MovieReview> call, Response<MovieReview> response) {
 
-                    if(response.code() == HttpURLConnection.HTTP_OK){
-                        hideProgressDialog();
+                    if (response.code() == HttpURLConnection.HTTP_OK) {
+                        dismissProgressDialog();
                         setUiWithMovieReviews(response.body().getReviewList());
                     }
 
@@ -245,24 +246,22 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
 
                 }
             });
-        }
-        else{
-            hideProgressDialog();
+        } else {
+            dismissProgressDialog();
             Utils.showSnackBar(mCoordinatorLayout, getString(R.string.no_internet_connection_to_show_reviews));
         }
 
     }
 
-    private void setUiWithMovieReviews(List<Review> reviewList){
+    private void setUiWithMovieReviews(List<Review> reviewList) {
 
         // We will be showing two reviews out of many
-        if(reviewList != null && reviewList.size() > 0){
+        if (reviewList != null && reviewList.size() > 0) {
 
-            if(reviewList.size() >= 2){
+            if (reviewList.size() >= 2) {
                 displayMovieReview(0, reviewList.get(0));
                 displayMovieReview(1, reviewList.get(1));
-            }
-            else {
+            } else {
                 // if there is only 1 review we will show only that
                 displayMovieReview(0, reviewList.get(0));
             }
@@ -270,28 +269,29 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
 
     }
 
-    private void displayMovieReview(int position, Review review){
+    private void displayMovieReview(int position, Review review) {
 
         CardView reviewView;
-        if(position == 0){
+        if (position == 0) {
             reviewView = mReviewView1;
             reviewView.findViewById(R.id.review_heading).setVisibility(View.VISIBLE);
             reviewView.findViewById(R.id.review_heading_line).setVisibility(View.VISIBLE);
 
-        }else{
+        } else {
             reviewView = mReviewView2;
         }
 
-        if(reviewView != null){
+        if (reviewView != null) {
             reviewView.setVisibility(View.VISIBLE);
-            ((TextView)reviewView.findViewById(R.id.author)).setText(review.getAuthor());
-            ((TextView)reviewView.findViewById(R.id.content)).setText(review.getContent());
+            ((TextView) reviewView.findViewById(R.id.author)).setText(review.getAuthor());
+            ((TextView) reviewView.findViewById(R.id.content)).setText(review.getContent());
         }
     }
 
-    private void fetchMovieTrailer(){
+    private void fetchMovieTrailer() {
 
-        if(Utils.isInternetOn(mContext)){
+        if (Utils.isInternetOn(mContext)) {
+            showProgresDialog();
             ApiInterface apiInterface = ServiceGenerator.createService(ApiInterface.class);
 
             Call<MovieTrailer> movieTrailerCall = apiInterface.getMovieTrailers(mMovie.getId(),
@@ -300,12 +300,12 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
             movieTrailerCall.enqueue(new Callback<MovieTrailer>() {
                 @Override
                 public void onResponse(Call<MovieTrailer> call, Response<MovieTrailer> response) {
-                    if(response.code() == HttpURLConnection.HTTP_OK){
+                    if (response.code() == HttpURLConnection.HTTP_OK) {
                         MovieTrailer movieTrailer = response.body();
-
-                        if(mFabId == R.id.play_fab)
+                        dismissProgressDialog();
+                        if (mFabId == R.id.play_fab)
                             setUiWithTrailerDialog(movieTrailer.getTrailerList());
-                        else if(mFabId == R.id.share_fab)
+                        else if (mFabId == R.id.share_fab)
                             shareMovieTrailer(movieTrailer.getTrailerList());
                     }
                 }
@@ -315,17 +315,17 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
 
                 }
             });
-        }
-        else{
+        } else {
             Utils.showSnackBar(mCoordinatorLayout, getString(R.string.no_internet));
         }
     }
 
-    private void setUiWithTrailerDialog(final List<Trailer> trailerList){
+    private void setUiWithTrailerDialog(final List<Trailer> trailerList) {
 
-        if(trailerList != null && trailerList.size() > 0){
 
-            String [] trailerNames = new String[trailerList.size()];
+        if (trailerList != null && trailerList.size() > 0) {
+
+            String[] trailerNames = new String[trailerList.size()];
 
             for (int i = 0; i < trailerList.size(); i++) {
                 trailerNames[i] = trailerList.get(i).getName();
@@ -344,25 +344,25 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
         }
     }
 
-    private void playMovieTrailer(String key){
+    private void playMovieTrailer(String key) {
 
         Intent appIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + key));
         Intent webIntent = new Intent(Intent.ACTION_VIEW,
                 Uri.parse(Constants.BASE_URL_VIDEO + key));
 
-        try{
+        try {
             startActivity(appIntent);
-        }
-        catch (ActivityNotFoundException e){
+        } catch (ActivityNotFoundException e) {
             startActivity(webIntent);
         }
     }
 
-    private void shareMovieTrailer(List<Trailer> trailerList){
+    private void shareMovieTrailer(List<Trailer> trailerList) {
 
-        if(trailerList != null && trailerList.size() > 0){
+        if (trailerList != null && trailerList.size() > 0) {
 
-            String trailerVideoText = Constants.BASE_URL_VIDEO + trailerList.get(0).getKey();
+            String trailerVideoText = "Hey check out this awesome trailer " +
+                    Constants.BASE_URL_VIDEO + trailerList.get(0).getKey();
 
             Intent intent = new Intent(Intent.ACTION_SEND);
             intent.setType("text/plain");
@@ -371,12 +371,21 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
 
             Intent shareIntent = Intent.createChooser(intent, "Share trailer via ");
 
-            if(intent.resolveActivity(mContext.getPackageManager()) != null){
+            if (intent.resolveActivity(mContext.getPackageManager()) != null) {
                 startActivity(shareIntent);
             }
-
         }
-
     }
 
+    private void checkIfFavourite() {
+
+        Cursor cursor = mContext.getContentResolver().query(
+                MovieEntry.buildMovieUri(mMovie.getId()),
+                null, null, null, null);
+
+        if(cursor != null && cursor.getCount() > 0)
+            isFavourite = true;
+        else
+            isFavourite = false;
+    }
 }

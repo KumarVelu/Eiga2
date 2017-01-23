@@ -40,7 +40,7 @@ public abstract class BaseFragment extends Fragment {
         mProgressDialog.show();
     }
 
-    void hideProgressDialog(){
+    void dismissProgressDialog(){
         if(mProgressDialog != null){
             mProgressDialog.dismiss();
         }
