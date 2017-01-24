@@ -18,6 +18,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -84,7 +85,7 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
     private CollapsingToolbarLayout mCollapsingToolbarLayout;
     private Context mContext;
     private Movie mMovie;
-    boolean isFavourite;
+    boolean mIsFavourite;
 
     int mFabId;
 
@@ -151,6 +152,7 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
         initializeUi();
         fetchMovieReviews();
         checkIfFavourite();
+        setFavIcon();
         setUiWithMovieDetails();
     }
 
@@ -183,9 +185,9 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
         mFabId = view.getId();
         switch (mFabId) {
             case R.id.fav_fab:
-                Toast.makeText(mContext, "Fab clicked", Toast.LENGTH_LONG).show();
+                mIsFavourite = !mIsFavourite;
                 setFavIcon();
-                mContext.getContentResolver().insert(MovieEntry.CONTENT_URI, prepareMovieCv());
+                addRemoveFromFavourite();
                 break;
 
             case R.id.play_fab:
@@ -198,11 +200,10 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
         }
     }
 
-    
+
 
     private void setFavIcon() {
-       // isFavourite = !isFavourite;
-        if (isFavourite) {
+        if (mIsFavourite) {
             favFab.setImageResource(R.drawable.ic_heart_filled);
         } else
             favFab.setImageResource(R.drawable.ic_heart_empty);
@@ -255,6 +256,8 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
 
     private void setUiWithMovieReviews(List<Review> reviewList) {
 
+        Log.i(TAG, "setUiWithMovieReviews: review size " + reviewList.size());
+        Log.i(TAG, "setUiWithMovieReviews: " + reviewList);
         // We will be showing two reviews out of many
         if (reviewList != null && reviewList.size() > 0) {
 
@@ -265,6 +268,9 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
                 // if there is only 1 review we will show only that
                 displayMovieReview(0, reviewList.get(0));
             }
+        }
+        else{
+            Toast.makeText(mContext, getString(R.string.no_reviews), Toast.LENGTH_LONG).show();
         }
 
     }
@@ -384,8 +390,23 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
                 null, null, null, null);
 
         if(cursor != null && cursor.getCount() > 0)
-            isFavourite = true;
+            mIsFavourite = true;
         else
-            isFavourite = false;
+            mIsFavourite = false;
+    }
+
+    private void addRemoveFromFavourite(){
+
+        if(mIsFavourite){
+            //add to fav(store in db)
+            mContext.getContentResolver().insert(MovieEntry.CONTENT_URI, prepareMovieCv());
+            Utils.showSnackBar(mCoordinatorLayout, mMovie.getTitle() + " added to favourite ");
+        }
+        else{
+            // remove form fav
+            Uri uri = MovieEntry.buildMovieUri(mMovie.getId());
+            mContext.getContentResolver().delete(uri, null, null);
+            Utils.showSnackBar(mCoordinatorLayout, mMovie.getTitle() + " removed from favourite ");
+        }
     }
 }

@@ -4,6 +4,7 @@ package com.vale.velu.eiga2.ui;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
@@ -25,6 +26,7 @@ import android.widget.RelativeLayout;
 import com.vale.velu.eiga2.BuildConfig;
 import com.vale.velu.eiga2.R;
 import com.vale.velu.eiga2.adapter.MovieListAdapter;
+import com.vale.velu.eiga2.data.MovieContract.MovieEntry;
 import com.vale.velu.eiga2.model.Movie;
 import com.vale.velu.eiga2.model.MovieResult;
 import com.vale.velu.eiga2.services.ApiInterface;
@@ -33,6 +35,7 @@ import com.vale.velu.eiga2.ui.assist.IActionListener;
 import com.vale.velu.eiga2.utils.Utils;
 
 import java.net.HttpURLConnection;
+import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.Bind;
@@ -69,6 +72,26 @@ public class MovieListFragment extends Fragment implements SharedPreferences.OnS
 
     private IActionListener mParentListener;
 
+
+    private final String [] MOVIE_COLUMNS = {
+            MovieEntry.COLUMN_MOVIE_ID,
+            MovieEntry.COLUMN_TITLE,
+            MovieEntry.COLUMN_POSTER_PATH,
+            MovieEntry.COLUMN_RATING,
+            MovieEntry.COLUMN_RELEASE_DATE,
+            MovieEntry.COLUMN_BACKDROP_PATH,
+            MovieEntry.COLUMN_PLOT_SYNOPSIS
+    };
+
+    // these indices are tied to MOVIE_COLUMNS, if MOVIE_COLUMNS
+    // changes this must changes as well
+    private static final int COL_MOVIE_ID = 0;
+    private static final int COL_MOVIE_TITLE = 1;
+    private static final int COL_POSTER_PATH = 2;
+    private static final int COL_RATING = 3;
+    private static final int COL_RELEASE_DATE = 4;
+    private static final int COL_BACKDROP_PATH = 5;
+    private static final int COL_PLOT_SYNOPSIS = 6;
 
     public static MovieListFragment newInstance(IActionListener listener) {
         MovieListFragment fragment = new MovieListFragment();
@@ -130,15 +153,23 @@ public class MovieListFragment extends Fragment implements SharedPreferences.OnS
                 registerOnSharedPreferenceChangeListener(this);
     }
 
-    private void fetchMovies() {
+    private void fetchMovies(){
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(mContext);
+        String sortCriteria = sp.getString(getString(R.string.sort_order_pref_key),
+                getString(R.string.default_sort_order));
+
+        if(sortCriteria.equals(getString(R.string.favourite))){
+            fetchMoviesFromDb();
+        }
+        else{
+            fetchMoviesFromApi(sortCriteria);
+        }
+    }
+
+    private void fetchMoviesFromApi(String sortCriteria) {
 
         mSwipeRefreshLayout.setRefreshing(true);
-
         if (Utils.isInternetOn(mContext)) {
-            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(mContext);
-            String sortCriteria = sp.getString(getString(R.string.sort_order_pref_key),
-                    getString(R.string.default_sort_order));
-
             ApiInterface apiInterface = ServiceGenerator.createService(ApiInterface.class);
             Call<MovieResult> movieListCall = apiInterface.getMovies(sortCriteria, BuildConfig.API_KEY);
             movieListCall.enqueue(new Callback<MovieResult>() {
@@ -201,5 +232,42 @@ public class MovieListFragment extends Fragment implements SharedPreferences.OnS
             mSwipeRefreshLayout.setRefreshing(false);
             Utils.showSnackBar(mCoordinatorLayout, getString(R.string.no_internet));
         }
+    }
+
+    private void fetchMoviesFromDb(){
+
+        Cursor cursor = mContext.getContentResolver().query(
+                MovieEntry.CONTENT_URI,
+                MOVIE_COLUMNS, null, null, null);
+
+        Log.i(TAG, "fetchMoviesFromDb: cursor count " + cursor.getCount());
+
+        List<Movie> movieList = prepareMovieListFromCursor(cursor);
+        setUiWithMovieList(movieList);
+
+    }
+
+    private List<Movie> prepareMovieListFromCursor(Cursor cursor){
+
+        List<Movie> movieList = null;
+
+        if(cursor != null && cursor.getCount() > 0){
+            movieList = new ArrayList<>();
+            cursor.moveToFirst();
+            while (cursor.isAfterLast()){
+                Movie movie = new Movie();
+                movie.setId(cursor.getInt(COL_MOVIE_ID));
+                movie.setTitle(cursor.getString(COL_MOVIE_TITLE));
+                movie.setBackDropPath(cursor.getString(COL_BACKDROP_PATH));
+                movie.setRating(cursor.getString(COL_RATING));
+                movie.setPosterPath(cursor.getString(COL_POSTER_PATH));
+                movie.setPlotSynopsis(cursor.getString(COL_PLOT_SYNOPSIS));
+                movie.setReleaseDate(cursor.getString(COL_RELEASE_DATE));
+
+                movieList.add(movie);
+                cursor.moveToNext();
+            }
+        }
+        return movieList;
     }
 }

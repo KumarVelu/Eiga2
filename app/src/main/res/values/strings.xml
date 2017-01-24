@@ -7,16 +7,21 @@
     <string name="no_internet">No Internet Connection!</string>
     <string name="retry">Retry</string>
     <string name="no_internet_connection_to_show_reviews">No Internet connection to show Reviews</string>
+    <string name="no_reviews">No Reviews found for the movie</string>
 
     <string-array name="sort_order_options">
         <item>Most Popular</item>
         <item>Highest Rated</item>
+        <item>My Favourite</item>
     </string-array>
 
     <string-array name="sort_order_values">
         <item>popular</item>
         <item>top_rated</item>
+        <item>@string/favourite</item>
     </string-array>
+
+    <string name="favourite">favourite</string>
 
     <!--preference string-->
     <string name="sort_order_summary">Select the sort order for Movies</string>

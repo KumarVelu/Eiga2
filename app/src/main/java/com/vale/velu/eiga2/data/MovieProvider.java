@@ -43,6 +43,14 @@ public class MovieProvider extends ContentProvider {
         Cursor returnCursor;
 
         switch (sUriMatcher.match(uri)){
+
+            case MOVIE:
+                returnCursor = db.query(MovieEntry.TABLE_NAME,
+                        projection,
+                        null, null, null, null,
+                        sortOrder);
+                break;
+
             case MOVIE_WITH_ID:
                 returnCursor = db.query(MovieEntry.TABLE_NAME,
                         new String[]{MovieEntry.COLUMN_MOVIE_ID},
@@ -90,8 +98,23 @@ public class MovieProvider extends ContentProvider {
     }
 
     @Override
-    public int delete(Uri uri, String s, String[] strings) {
-        return 0;
+    public int delete(Uri uri, String where, String[] whereArgs)
+    {
+        final SQLiteDatabase db = mDbHelper.getWritableDatabase();
+        int rowsDeleted;
+
+        switch (sUriMatcher.match(uri)){
+            case MOVIE_WITH_ID:
+                rowsDeleted = db.delete(MovieEntry.TABLE_NAME,
+                        MovieEntry.COLUMN_MOVIE_ID + " = ?",
+                        new String[]{MovieEntry.getMovieIdFromUri(uri)});
+                break;
+
+            default:
+                throw new UnsupportedOperationException("Unknow uri " + uri);
+        }
+
+        return rowsDeleted;
     }
 
     @Override
