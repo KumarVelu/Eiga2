@@ -65,6 +65,7 @@ public class MovieProvider extends ContentProvider {
                 throw new UnsupportedOperationException("Unknown uri " + uri);
         }
 
+        returnCursor.setNotificationUri(getContext().getContentResolver(), uri);
         return returnCursor;
     }
 
@@ -108,12 +109,12 @@ public class MovieProvider extends ContentProvider {
                 rowsDeleted = db.delete(MovieEntry.TABLE_NAME,
                         MovieEntry.COLUMN_MOVIE_ID + " = ?",
                         new String[]{MovieEntry.getMovieIdFromUri(uri)});
+                getContext().getContentResolver().notifyChange(MovieEntry.CONTENT_URI, null);
                 break;
 
             default:
-                throw new UnsupportedOperationException("Unknow uri " + uri);
+                throw new UnsupportedOperationException("Unknown uri " + uri);
         }
-
         return rowsDeleted;
     }
 

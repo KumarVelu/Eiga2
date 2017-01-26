@@ -5,11 +5,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -48,7 +52,7 @@ import retrofit2.Response;
  * A simple {@link Fragment} subclass.
  */
 public class MovieListFragment extends Fragment implements SharedPreferences.OnSharedPreferenceChangeListener,
-        View.OnClickListener, SwipeRefreshLayout.OnRefreshListener {
+        View.OnClickListener, SwipeRefreshLayout.OnRefreshListener, LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final String TAG = MovieListFragment.class.getSimpleName();
 
@@ -58,6 +62,8 @@ public class MovieListFragment extends Fragment implements SharedPreferences.OnS
     LinearLayout mMovieListLayout;
     @Bind(R.id.no_internet_layout)
     RelativeLayout mNoInternetLayout;
+    @Bind(R.id.no_fav_layout)
+    RelativeLayout mNoFavMovieLayout;
     @Bind(R.id.retry)
     Button retryBtn;
     @Bind(R.id.swipe_refresh_layout)
@@ -69,6 +75,8 @@ public class MovieListFragment extends Fragment implements SharedPreferences.OnS
 
     private Context mContext;
     private MovieListAdapter mMovieListAdapter;
+    private static final int MOVIE_LOADER = 0;
+    private String mSortCriteria;
 
     private IActionListener mParentListener;
 
@@ -130,6 +138,7 @@ public class MovieListFragment extends Fragment implements SharedPreferences.OnS
 
         retryBtn.setOnClickListener(this);
         mSwipeRefreshLayout.setOnRefreshListener(this);
+        getActivity().getSupportLoaderManager().initLoader(MOVIE_LOADER, null, this);
         initializeUi();
         fetchMovies();
     }
@@ -155,14 +164,14 @@ public class MovieListFragment extends Fragment implements SharedPreferences.OnS
 
     private void fetchMovies(){
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(mContext);
-        String sortCriteria = sp.getString(getString(R.string.sort_order_pref_key),
+         mSortCriteria = sp.getString(getString(R.string.sort_order_pref_key),
                 getString(R.string.default_sort_order));
 
-        if(sortCriteria.equals(getString(R.string.favourite))){
+        if(mSortCriteria.equals(getString(R.string.favourite))){
             fetchMoviesFromDb();
         }
         else{
-            fetchMoviesFromApi(sortCriteria);
+            fetchMoviesFromApi(mSortCriteria);
         }
     }
 
@@ -195,6 +204,7 @@ public class MovieListFragment extends Fragment implements SharedPreferences.OnS
     public void setUiWithMovieList(List<Movie> movieList) {
         mSwipeRefreshLayout.setRefreshing(false);
         mNoInternetLayout.setVisibility(View.GONE);
+        mNoFavMovieLayout.setVisibility(View.GONE);
         mMovieListLayout.setVisibility(View.VISIBLE);
         mMovieListAdapter.swapData(movieList);
     }
@@ -243,8 +253,17 @@ public class MovieListFragment extends Fragment implements SharedPreferences.OnS
         Log.i(TAG, "fetchMoviesFromDb: cursor count " + cursor.getCount());
 
         List<Movie> movieList = prepareMovieListFromCursor(cursor);
-        setUiWithMovieList(movieList);
+        if(movieList != null)
+            setUiWithMovieList(movieList);
+        else
+            showNoMovieMarkedAsFav();
 
+    }
+
+    private void showNoMovieMarkedAsFav() {
+        mMovieListLayout.setVisibility(View.GONE);
+        mNoFavMovieLayout.setVisibility(View.VISIBLE);
+        mSwipeRefreshLayout.setRefreshing(false);
     }
 
     private List<Movie> prepareMovieListFromCursor(Cursor cursor){
@@ -254,7 +273,7 @@ public class MovieListFragment extends Fragment implements SharedPreferences.OnS
         if(cursor != null && cursor.getCount() > 0){
             movieList = new ArrayList<>();
             cursor.moveToFirst();
-            while (cursor.isAfterLast()){
+            while (!cursor.isAfterLast()){
                 Movie movie = new Movie();
                 movie.setId(cursor.getInt(COL_MOVIE_ID));
                 movie.setTitle(cursor.getString(COL_MOVIE_TITLE));
@@ -269,5 +288,31 @@ public class MovieListFragment extends Fragment implements SharedPreferences.OnS
             }
         }
         return movieList;
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        Uri favMovieUri = MovieEntry.CONTENT_URI;
+
+        return new CursorLoader(mContext, favMovieUri,
+                MOVIE_COLUMNS, null, null, null);
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+
+        if(mSortCriteria != null && mSortCriteria.equals(getString(R.string.favourite))){
+            List<Movie> movieList = prepareMovieListFromCursor(data);
+            if(movieList != null)
+                setUiWithMovieList(movieList);
+            else
+                showNoMovieMarkedAsFav();
+        }
+
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+
     }
 }
