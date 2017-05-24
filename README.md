@@ -1,5 +1,5 @@
 # Eiga2 #
-This app adds additional functionality to the stage 1 of Eiga
+This app adds additional functionality to the stage 1 of [Eiga](https://github.com/KumarVelu/Eiga)
 
 ## Features ##
 * Sort Movies by popularity and rating.
