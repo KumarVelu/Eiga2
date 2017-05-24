@@ -1,4 +1,4 @@
-# Eiga 2#
+# Eiga 2 #
 This app adds additional functionality to the stage 1 of Eiga
 
 ## Features ##
