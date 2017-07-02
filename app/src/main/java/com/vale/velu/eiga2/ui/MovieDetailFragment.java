@@ -18,7 +18,6 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -109,14 +108,6 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
     }
 
     @Override
-    protected void updateArgs(Bundle args) {
-        if (args.getSerializable(MOVIE_KEY) != null) {
-            mMovie = (Movie) args.getSerializable(MOVIE_KEY);
-            getArguments().putSerializable(MOVIE_KEY, mMovie);
-        }
-    }
-
-    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
@@ -124,15 +115,12 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
         ButterKnife.bind(this, rootView);
         mToolbar = (Toolbar) rootView.findViewById(R.id.toolbar);
         ((AppCompatActivity) getActivity()).setSupportActionBar(mToolbar);
-        // ((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
         mCollapsingToolbarLayout = (CollapsingToolbarLayout) rootView.findViewById(R.id.collapsing_toolbar);
         return rootView;
     }
 
 
     private void setUiWithMovieDetails() {
-
         Picasso.with(mContext).load(Constants.POSTER_PATH_PREFIX + mMovie.getPosterPath()).
                 into(posterImage);
         Picasso.with(mContext).load(Constants.BACKDROP_PATH_PREFIX + mMovie.getBackDropPath()).
@@ -143,7 +131,6 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
         tvReleaseDate.setText(Utils.formatReleaseDate(mMovie.getReleaseDate()));
         tvRating.setText(mMovie.getRating());
         tvPlotSynopsis.setText(mMovie.getPlotSynopsis());
-
     }
 
     @Override
@@ -167,12 +154,6 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
         favFab.setOnClickListener(this);
         playTrailerFab.setOnClickListener(this);
         shareFab.setOnClickListener(this);
-    }
-
-    @Override
-    protected void onBackPressed() {
-        super.onBackPressed();
-        mMovie = null;
     }
 
     public Movie getMovie() {
@@ -225,7 +206,7 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
     private void fetchMovieReviews() {
 
         if (Utils.isInternetOn(mContext)) {
-            showProgresDialog();
+            showProgressDialog();
             ApiInterface apiInterface = ServiceGenerator.createService(ApiInterface.class);
 
             Call<MovieReview> movieReviewCall = apiInterface.getMovieReviews(mMovie.getId(),
@@ -256,11 +237,8 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
 
     private void setUiWithMovieReviews(List<Review> reviewList) {
 
-        Log.i(TAG, "setUiWithMovieReviews: review size " + reviewList.size());
-        Log.i(TAG, "setUiWithMovieReviews: " + reviewList);
         // We will be showing two reviews out of many
         if (reviewList != null && reviewList.size() > 0) {
-
             if (reviewList.size() >= 2) {
                 displayMovieReview(0, reviewList.get(0));
                 displayMovieReview(1, reviewList.get(1));
@@ -297,7 +275,7 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
     private void fetchMovieTrailer() {
 
         if (Utils.isInternetOn(mContext)) {
-            showProgresDialog();
+            showProgressDialog();
             ApiInterface apiInterface = ServiceGenerator.createService(ApiInterface.class);
 
             Call<MovieTrailer> movieTrailerCall = apiInterface.getMovieTrailers(mMovie.getId(),
@@ -327,18 +305,13 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
     }
 
     private void setUiWithTrailerDialog(final List<Trailer> trailerList) {
-
-
         if (trailerList != null && trailerList.size() > 0) {
-
             String[] trailerNames = new String[trailerList.size()];
-
             for (int i = 0; i < trailerList.size(); i++) {
                 trailerNames[i] = trailerList.get(i).getName();
             }
-
             AlertDialog.Builder alertDialog = new AlertDialog
-                    .Builder(mContext).setTitle("Trailers")
+                    .Builder(mContext).setTitle(getString(R.string.trailers))
                     .setItems(trailerNames, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int position) {
@@ -384,7 +357,6 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
     }
 
     private void checkIfFavourite() {
-
         Cursor cursor = mContext.getContentResolver().query(
                 MovieEntry.buildMovieUri(mMovie.getId()),
                 null, null, null, null);
@@ -396,7 +368,6 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
     }
 
     private void addRemoveFromFavourite(){
-
         if(mIsFavourite){
             //add to fav(store in db)
             mContext.getContentResolver().insert(MovieEntry.CONTENT_URI, prepareMovieCv());

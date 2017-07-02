@@ -1,15 +1,15 @@
 package com.vale.velu.eiga2.ui;
 
 import android.app.ProgressDialog;
-import android.os.Bundle;
 import android.support.v4.app.Fragment;
+
+import com.vale.velu.eiga2.R;
 
 /**
  * Created by kumar_velu on 1/5/17.
  */
 public abstract class BaseFragment extends Fragment {
 
-    private final static String TAG = BaseFragment.class.getSimpleName();
     private ProgressDialog mProgressDialog;
 
     protected void closeFragment() {
@@ -19,24 +19,9 @@ public abstract class BaseFragment extends Fragment {
             getFragmentManager().popBackStackImmediate();
     }
 
-    @Override
-    public void setArguments(Bundle args) {
-        try {
-            super.setArguments(args);
-        } catch (Exception e) {
-            updateArgs(args);
-        }
-    }
-
-    protected abstract void updateArgs(Bundle args);
-
-    protected void onBackPressed(){
-
-    }
-
-    void showProgresDialog(){
+    void showProgressDialog(){
         mProgressDialog = new ProgressDialog(getActivity());
-        mProgressDialog.setMessage("Loading");
+        mProgressDialog.setMessage(getString(R.string.loading));
         mProgressDialog.show();
     }
 
