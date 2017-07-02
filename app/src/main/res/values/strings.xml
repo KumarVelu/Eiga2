@@ -29,11 +29,16 @@
     <string name="sort_order_pref_key">SortOrderKey</string>
     <string name="default_sort_order">popular</string>
 
-    <string name="loading">Loading...</string>
+    <string name="loading">Loading…</string>
     <string name="trailers">Trailers</string>
 
     <string name="dummy_overview">Following the events of Age of Ultron, the collective governments of the world pass an act designed to regulate all superhuman activity. This polarizes opinion amongst the Avengers, causing two factions to side with Iron Man or Captain America, which causes an epic battle between former allies.</string>
     <string name="reviews">Reviews</string>
-    <string name="no_movie_marked_as_fav">No movie is maked as favourite, Plese change the sort criteria.</string>
+    <string name="no_movie_marked_as_fav">No movie is marked as favourite, Please change the sort criteria.</string>
+
+    <!--Content description-->
+    <string name="movie_poster_cd">Movie Poster Image</string>
+    <string name="movie_backdrop_cd">Movie Backdrop Image</string>
+    <string name="rating_cd">Rating Image</string>
 
 </resources>

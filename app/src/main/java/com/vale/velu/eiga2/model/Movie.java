@@ -1,15 +1,13 @@
 package com.vale.velu.eiga2.model;
 
 import com.google.gson.annotations.SerializedName;
-import com.vale.velu.eiga2.ui.assist.BaseData;
-import com.vale.velu.eiga2.utils.Constants;
 
 import java.io.Serializable;
 
 /**
  * Created by kumar_velu on 27-12-2016.
  */
-public class Movie implements Serializable, BaseData {
+public class Movie implements Serializable {
 
     @SerializedName("id")
     private int id;
@@ -93,10 +91,5 @@ public class Movie implements Serializable, BaseData {
                 ", backDropPath='" + backDropPath + '\'' +
                 ", plotSynopsis='" + plotSynopsis + '\'' +
                 '}';
-    }
-
-    @Override
-    public String getDataType() {
-        return Constants.MOVIE;
     }
 }

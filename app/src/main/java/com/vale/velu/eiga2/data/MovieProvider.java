@@ -19,9 +19,9 @@ public class MovieProvider extends ContentProvider {
     private static final int MOVIE = 100;
     private static final int MOVIE_WITH_ID = 101;
 
-    public static UriMatcher sUriMatcher = buildUriMathcher();
+    public static UriMatcher sUriMatcher = buildUriMatcher();
 
-    static UriMatcher buildUriMathcher(){
+    static UriMatcher buildUriMatcher(){
         UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
         matcher.addURI(MovieContract.AUTHORITY, MovieContract.PATH_MOVIE, MOVIE);
         matcher.addURI(MovieContract.AUTHORITY, MovieContract.PATH_MOVIE + "/#",

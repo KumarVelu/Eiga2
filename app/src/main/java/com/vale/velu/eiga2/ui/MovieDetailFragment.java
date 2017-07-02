@@ -365,6 +365,8 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
             mIsFavourite = true;
         else
             mIsFavourite = false;
+
+        cursor.close();
     }
 
     private void addRemoveFromFavourite(){
