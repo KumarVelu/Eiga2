@@ -156,10 +156,6 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
         shareFab.setOnClickListener(this);
     }
 
-    public Movie getMovie() {
-        return mMovie;
-    }
-
     @Override
     public void onClick(View view) {
 
@@ -180,8 +176,6 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
                 break;
         }
     }
-
-
 
     private void setFavIcon() {
         if (mIsFavourite) {
@@ -220,7 +214,6 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
                         dismissProgressDialog();
                         setUiWithMovieReviews(response.body().getReviewList());
                     }
-
                 }
 
                 @Override
@@ -254,7 +247,6 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
     }
 
     private void displayMovieReview(int position, Review review) {
-
         CardView reviewView;
         if (position == 0) {
             reviewView = mReviewView1;
@@ -273,7 +265,6 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
     }
 
     private void fetchMovieTrailer() {
-
         if (Utils.isInternetOn(mContext)) {
             showProgressDialog();
             ApiInterface apiInterface = ServiceGenerator.createService(ApiInterface.class);
@@ -324,7 +315,6 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
     }
 
     private void playMovieTrailer(String key) {
-
         Intent appIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + key));
         Intent webIntent = new Intent(Intent.ACTION_VIEW,
                 Uri.parse(Constants.BASE_URL_VIDEO + key));
@@ -337,7 +327,6 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
     }
 
     private void shareMovieTrailer(List<Trailer> trailerList) {
-
         if (trailerList != null && trailerList.size() > 0) {
 
             String trailerVideoText = "Hey check out this awesome trailer " +

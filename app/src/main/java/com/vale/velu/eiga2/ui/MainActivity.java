@@ -19,11 +19,12 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Stetho.initializeWithDefaults(this);
-        loadMovieListFragment();
 
-        if (findViewById(R.id.detailFrame) != null) mDualPane = true;
+        if (findViewById(R.id.detailFrame) != null)
+            mDualPane = true;
 
-        if (savedInstanceState != null) loadMovieListFragment();
+        if (savedInstanceState == null)
+            loadMovieListFragment();
     }
 
     private void loadMovieListFragment() {
