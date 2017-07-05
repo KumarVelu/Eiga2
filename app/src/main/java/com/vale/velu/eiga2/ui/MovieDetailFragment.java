@@ -119,20 +119,6 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
         return rootView;
     }
 
-
-    private void setUiWithMovieDetails() {
-        Picasso.with(mContext).load(Constants.POSTER_PATH_PREFIX + mMovie.getPosterPath()).
-                into(posterImage);
-        Picasso.with(mContext).load(Constants.BACKDROP_PATH_PREFIX + mMovie.getBackDropPath()).
-                into(backDropImage);
-
-        mCollapsingToolbarLayout.setTitle(mMovie.getTitle().trim());
-        tvTitle.setText(mMovie.getTitle());
-        tvReleaseDate.setText(Utils.formatReleaseDate(mMovie.getReleaseDate()));
-        tvRating.setText(mMovie.getRating());
-        tvPlotSynopsis.setText(mMovie.getPlotSynopsis());
-    }
-
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -154,6 +140,19 @@ public class MovieDetailFragment extends BaseFragment implements View.OnClickLis
         favFab.setOnClickListener(this);
         playTrailerFab.setOnClickListener(this);
         shareFab.setOnClickListener(this);
+    }
+
+    private void setUiWithMovieDetails() {
+        Picasso.with(mContext).load(Constants.POSTER_PATH_PREFIX + mMovie.getPosterPath()).
+                into(posterImage);
+        Picasso.with(mContext).load(Constants.BACKDROP_PATH_PREFIX + mMovie.getBackDropPath()).
+                into(backDropImage);
+
+        mCollapsingToolbarLayout.setTitle(mMovie.getTitle().trim());
+        tvTitle.setText(mMovie.getTitle());
+        tvReleaseDate.setText(Utils.formatReleaseDate(mMovie.getReleaseDate()));
+        tvRating.setText(mMovie.getRating());
+        tvPlotSynopsis.setText(mMovie.getPlotSynopsis());
     }
 
     @Override

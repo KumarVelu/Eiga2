@@ -39,6 +39,7 @@ import com.vale.velu.eiga2.services.ApiInterface;
 import com.vale.velu.eiga2.services.ServiceGenerator;
 import com.vale.velu.eiga2.utils.Utils;
 
+import java.io.Serializable;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
@@ -80,6 +81,9 @@ public class MovieListFragment extends Fragment implements SharedPreferences.OnS
     private MovieListAdapter mMovieListAdapter;
     private static final int MOVIE_LOADER = 0;
     private String mSortCriteria;
+
+    private List<Movie> mMovieList;
+    private final String MOVIE_LIST_KEY = "movieList";
 
     private final String[] MOVIE_COLUMNS = {
             MovieEntry.COLUMN_MOVIE_ID,
@@ -141,7 +145,12 @@ public class MovieListFragment extends Fragment implements SharedPreferences.OnS
         mSwipeRefreshLayout.setOnRefreshListener(this);
         getActivity().getSupportLoaderManager().initLoader(MOVIE_LOADER, null, this);
         initializeUi();
-        fetchMovies();
+
+        if(savedInstanceState == null) fetchMovies();
+        else {
+            mMovieList = (List<Movie>) savedInstanceState.getSerializable(MOVIE_LIST_KEY);
+            setUiWithMovieList();
+        }
     }
 
     private void initializeUi() {
@@ -184,7 +193,8 @@ public class MovieListFragment extends Fragment implements SharedPreferences.OnS
                 @Override
                 public void onResponse(Call<MovieResult> call, Response<MovieResult> response) {
                     if (response.code() == HttpURLConnection.HTTP_OK) {
-                        setUiWithMovieList(response.body().getMovieList());
+                        mMovieList = response.body().getMovieList();
+                        setUiWithMovieList();
                     }
                 }
 
@@ -194,18 +204,19 @@ public class MovieListFragment extends Fragment implements SharedPreferences.OnS
                 }
             });
         } else {
+            mNoFavMovieLayout.setVisibility(View.GONE);
             mMovieListLayout.setVisibility(View.GONE);
             mNoInternetLayout.setVisibility(View.VISIBLE);
             mSwipeRefreshLayout.setRefreshing(false);
         }
     }
 
-    public void setUiWithMovieList(List<Movie> movieList) {
+    public void setUiWithMovieList() {
         mSwipeRefreshLayout.setRefreshing(false);
         mNoInternetLayout.setVisibility(View.GONE);
         mNoFavMovieLayout.setVisibility(View.GONE);
         mMovieListLayout.setVisibility(View.VISIBLE);
-        mMovieListAdapter.swapData(movieList);
+        mMovieListAdapter.swapData(mMovieList);
     }
 
     @Override
@@ -249,8 +260,10 @@ public class MovieListFragment extends Fragment implements SharedPreferences.OnS
                 MOVIE_COLUMNS, null, null, null);
 
         List<Movie> movieList = getMovieListFromCursor(cursor);
-        if (movieList != null)
-            setUiWithMovieList(movieList);
+        if (movieList != null){
+            mMovieList = movieList;
+            setUiWithMovieList();
+        }
         else
             showNoMovieMarkedAsFav();
 
@@ -258,6 +271,7 @@ public class MovieListFragment extends Fragment implements SharedPreferences.OnS
 
     private void showNoMovieMarkedAsFav() {
         mMovieListLayout.setVisibility(View.GONE);
+        mNoInternetLayout.setVisibility(View.GONE);
         mNoFavMovieLayout.setVisibility(View.VISIBLE);
         mSwipeRefreshLayout.setRefreshing(false);
     }
@@ -296,8 +310,10 @@ public class MovieListFragment extends Fragment implements SharedPreferences.OnS
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         if (mSortCriteria != null && mSortCriteria.equals(getString(R.string.favourite))) {
             List<Movie> movieList = getMovieListFromCursor(data);
-            if (movieList != null)
-                setUiWithMovieList(movieList);
+            if (movieList != null){
+                mMovieList = movieList;
+                setUiWithMovieList();
+            }
             else
                 showNoMovieMarkedAsFav();
         }
@@ -322,5 +338,11 @@ public class MovieListFragment extends Fragment implements SharedPreferences.OnS
             ft.add(R.id.frame, movieDetailFragment)
                     .addToBackStack(null).commit();
         }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putSerializable(MOVIE_LIST_KEY, (Serializable) mMovieList);
     }
 }
