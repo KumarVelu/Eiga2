@@ -13,8 +13,8 @@ This app adds additional functionality to the stage 1 of [Eiga](https://github.c
 
 This app uses The Movie Database API (https://www.themoviedb.org/documentation/api). You have to provide your own API key in order to run the app.
 You can create you own key with this link https://www.themoviedb.org/account/signup?language=en-EN
-Once you get the API key, paste it in Eiga/gradle.properties
-as API_KEY="YOUR_API_KEY"
+Once you get the API key, paste it in Eiga2/gradle.properties
+as API_KEY="YOUR_API_KEY" (If you don't find gradle.properties file you can create one yourself)
 
 (Note: In case if you are cloning this project, gradle.properties file won't be created, you will have to create it manually in the root folder of your project Eiga/gradle.properties)
 
